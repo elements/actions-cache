@@ -85,6 +85,8 @@ export async function findObject(
     const sorted = objects.sort(
       (a, b) => b.lastModified.getTime() - a.lastModified.getTime()
     );
+    // Store the matched cache key
+    core.saveState("CACHE_RESULT_KEY", key);
     core.debug(`Using latest ${JSON.stringify(sorted[0])}`);
     return sorted[0];
   }
@@ -116,4 +118,21 @@ export function listObjects(
         reject(new Error("list objects no result after 10 seconds"));
     }, 10000);
   });
+}
+
+export function getCacheResultKey(): string | undefined {
+  const cacheKey = core.getState("CACHE_RESULT_KEY");
+  if (cacheKey) {
+    core.debug(`Cache Key: ${cacheKey}`);
+    return cacheKey;
+  }
+}
+
+export function isExactKeyMatch(key: string, cacheKey?: string): boolean {
+  return !!(
+      cacheKey &&
+      cacheKey.localeCompare(key, undefined, {
+          sensitivity: "accent"
+      }) === 0
+  );
 }

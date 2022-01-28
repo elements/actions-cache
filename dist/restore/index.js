@@ -6316,7 +6316,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.listObjects = exports.findObject = exports.setCacheHitOutput = exports.formatSize = exports.getInputAsInt = exports.getInputAsArray = exports.getInputAsBoolean = exports.newMinio = exports.isGhes = void 0;
+exports.isExactKeyMatch = exports.getCacheResultKey = exports.listObjects = exports.findObject = exports.setCacheHitOutput = exports.formatSize = exports.getInputAsInt = exports.getInputAsArray = exports.getInputAsBoolean = exports.newMinio = exports.isGhes = void 0;
 const utils = __importStar(__webpack_require__(15));
 const core = __importStar(__webpack_require__(470));
 const minio = __importStar(__webpack_require__(223));
@@ -6384,6 +6384,8 @@ function findObject(mc, bucket, keys, compressionMethod) {
                 continue;
             }
             const sorted = objects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+            // Store the matched cache key
+            core.saveState("CACHE_RESULT_KEY", key);
             core.debug(`Using latest ${JSON.stringify(sorted[0])}`);
             return sorted[0];
         }
@@ -6414,6 +6416,21 @@ function listObjects(mc, bucket, prefix) {
     });
 }
 exports.listObjects = listObjects;
+function getCacheResultKey() {
+    const cacheKey = core.getState("CACHE_RESULT_KEY");
+    if (cacheKey) {
+        core.debug(`Cache Key: ${cacheKey}`);
+        return cacheKey;
+    }
+}
+exports.getCacheResultKey = getCacheResultKey;
+function isExactKeyMatch(key, cacheKey) {
+    return !!(cacheKey &&
+        cacheKey.localeCompare(key, undefined, {
+            sensitivity: "accent"
+        }) === 0);
+}
+exports.isExactKeyMatch = isExactKeyMatch;
 
 
 /***/ }),

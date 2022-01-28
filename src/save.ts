@@ -3,7 +3,7 @@ import * as utils from "@actions/cache/lib/internal/cacheUtils";
 import { createTar, listTar } from "@actions/cache/lib/internal/tar";
 import * as core from "@actions/core";
 import * as path from "path";
-import { getInputAsArray, getInputAsBoolean, isGhes, newMinio } from "./utils";
+import { getInputAsArray, getInputAsBoolean, isGhes, newMinio, getCacheResultKey, isExactKeyMatch } from "./utils";
 
 process.on("uncaughtException", (e) => core.info("warning: " + e.message));
 
@@ -13,6 +13,15 @@ async function saveCache() {
     const key = core.getInput("key", { required: true });
     const useFallback = getInputAsBoolean("use-fallback");
     const paths = getInputAsArray("path");
+
+    const cacheResultKey = getCacheResultKey();
+
+    if (isExactKeyMatch(key, cacheResultKey)) {
+      core.info(
+        `Cache hit occurred on the primary key ${key}, not saving cache.`
+      );
+      return
+    }
 
     try {
       const mc = newMinio();
